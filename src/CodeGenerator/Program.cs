@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace CodeGenerator
 {
-    class Program
+    static class Program
     {
         static void Main(string[] args)
         {
@@ -20,29 +20,26 @@ namespace CodeGenerator
 
                 foreach (var codeProperty in codeCopy.GetType().GetProperties())
                 {
-                    var classType = codeProperty.GetType();
-                    if (codeProperty.PropertyType == typeof(ProjectModel))
+                    if (codeProperty.PropertyType != typeof(ProjectModel)) continue;
+                    if (!(codeProperty.GetValue(codeCopy) is ProjectModel projectModelValue)) continue;
+                    foreach (var projectProperty in projectModelValue.GetType().GetProperties())
                     {
-                        var projectModelValue = codeProperty.GetValue(codeCopy) as ProjectModel;
-                        foreach (var projectProperty in projectModelValue?.GetType()?.GetProperties())
-                        {
-                            if (projectProperty.PropertyType == typeof(ProjectInfoModel))
-                            {
-                                var projectInfoModelValue =
-                                    projectProperty.GetValue(projectModelValue) as ProjectInfoModel;
-                                var folderPath = codeCopy.MainProjectFolder + "/" + projectModelValue.ProjectName +
-                                                 "/" +
-                                                 projectInfoModelValue.Folder;
-                                ConsoleWrite(ConsoleColor.Cyan, $"I'm in '{folderPath}' folder");
+                        if (projectProperty.PropertyType != typeof(ProjectInfoModel)) continue;
+                        
+                        if (!(projectProperty.GetValue(projectModelValue) is ProjectInfoModel projectInfoModelValue))
+                            continue;
 
-                                CreateNewFile(
-                                    infoModel: projectInfoModelValue,
-                                    classNames: codeCopy.ClassName,
-                                    folder: folderPath,
-                                    sampleClassName: codeCopy.ExampleClassName,
-                                    fileFormat: codeCopy.FileFormat);
-                            }
-                        }
+                        var folderPath = codeCopy.MainProjectFolder + "/" + projectModelValue.ProjectName +
+                                         "/" +
+                                         projectInfoModelValue.Folder;
+                        ConsoleWrite(ConsoleColor.Cyan, $"I'm in '{folderPath}' folder");
+
+                        CreateNewFile(
+                            infoModel: projectInfoModelValue,
+                            classNames: codeCopy.ClassName,
+                            folder: folderPath,
+                            sampleClassName: codeCopy.ExampleClassName,
+                            fileFormat: codeCopy.FileFormat);
                     }
                 }
 
